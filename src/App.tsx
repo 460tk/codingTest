@@ -1,22 +1,31 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import Highcharts from "highcharts";
 
 function App() {
-  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const mychart = new Highcharts.Chart({
+      chart: { renderTo: "hchart" },
+      title: { text: "タイトル" },
+      xAxis: { title: { text: "横軸" } },
+      yAxis: { title: { text: "縦軸" } },
+      series: [
+        { type: "line", name: "ライン1", data: [1, 4, 1, 4, 2] },
+        { type: "line", name: "ライン2", data: [1, 7, 3, 2, 0] },
+      ],
+      legend: {
+        layout: "vertical",
+        align: "right",
+        verticalAlign: "top",
+      },
+    });
+    return () => {
+      mychart.destroy();
+    };
+  }, []);
 
   return (
     <>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <div id="hchart"></div>
     </>
   );
 }
