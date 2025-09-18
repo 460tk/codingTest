@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import Highcharts, { type SeriesOptionsType } from "highcharts";
+import PrefectureSelector from "./conpornents/PrefectureSelector";
+
+import type { Prefecture } from "../@types/index";
 
 interface PrefecturesResponse {
   message: string | null;
   result: Prefecture[];
-}
-
-interface Prefecture {
-  prefCode: number;
-  prefName: string;
 }
 
 function App() {
