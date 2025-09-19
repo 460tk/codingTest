@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Highcharts, {
   type SeriesOptionsType,
   type SeriesLineOptions,
@@ -19,6 +19,9 @@ function App() {
   const [checkedPrefectureArray, setCheckedPrefectureArray] = useState<
     number[]
   >([]);
+  const [populationDataCache, setPopulationDataCache] = useState<
+    Map<number, SeriesLineOptions>
+  >(new Map());
 
   // 都道府県の取得関数
   async function prefectureGet() {
@@ -28,32 +31,47 @@ function App() {
   }
 
   // 都道府県の人口データの取得関数
-  async function getPrefectureData(
-    prefCode: number,
-    prefName: string,
-  ): Promise<SeriesLineOptions> {
-    const params = new URLSearchParams();
-    params.append("prefCode", prefCode.toString());
-    const poplationResponse = await fetch(
-      `/api/v1/population/composition/perYear?${params}`,
-    );
-    const poplationData: PopulationCompositionPerYearResponse =
-      await poplationResponse.json();
+  const getPrefectureData = useCallback(
+    async (
+      prefCode: number,
+      prefName: string,
+    ): Promise<SeriesLineOptions> => {
+      if (populationDataCache.has(prefCode)) {
+        return populationDataCache.get(prefCode)!;
+      }
 
-    const totalPopulationData = poplationData.result.data.find(
-      (item) => item.label === "総人口",
-    );
+      const params = new URLSearchParams();
+      params.append("prefCode", prefCode.toString());
+      const poplationResponse = await fetch(
+        `/api/v1/population/composition/perYear?${params}`,
+      );
+      const poplationData: PopulationCompositionPerYearResponse =
+        await poplationResponse.json();
 
-    const data = totalPopulationData
-      ? totalPopulationData.data.map((item) => item.value)
-      : [];
+      const totalPopulationData = poplationData.result.data.find(
+        (item) => item.label === "総人口",
+      );
 
-    return {
-      type: "line",
-      name: prefName,
-      data: data,
-    };
-  }
+      const data = totalPopulationData
+        ? totalPopulationData.data.map((item) => item.value)
+        : [];
+
+      const newGraphLine: SeriesLineOptions = {
+        type: "line",
+        name: prefName,
+        data: data,
+      };
+
+      setPopulationDataCache((prevCache) => {
+        const newCache = new Map(prevCache);
+        newCache.set(prefCode, newGraphLine);
+        return newCache;
+      });
+
+      return newGraphLine;
+    },
+    [populationDataCache, setPopulationDataCache],
+  );
 
   // 都道府県の取得を非同期で実行
   useEffect(() => {
@@ -93,7 +111,7 @@ function App() {
     } else if (checkedPrefectureArray.length === 0) {
       setGraphLines(undefined);
     }
-  }, [prefectures, checkedPrefectureArray]);
+  }, [prefectures, checkedPrefectureArray, getPrefectureData]);
 
   // Highchertsグラフの描画を実行
   useEffect(() => {
