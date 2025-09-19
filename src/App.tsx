@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import Highcharts, { type SeriesOptionsType } from "highcharts";
+import Highcharts, {
+  type SeriesOptionsType,
+  type SeriesLineOptions,
+} from "highcharts";
 import PrefectureSelector from "./conpornents/PrefectureSelector";
 
-import type { Prefecture } from "../@types/index";
-
-interface PrefecturesResponse {
-  message: string | null;
-  result: Prefecture[];
-}
+import type {
+  Prefecture,
+  PrefecturesResponse,
+  PopulationCompositionPerYearResponse,
+} from "../@types/index";
 
 function App() {
   const [prefectures, setPrefectures] = useState<Prefecture[] | null>(null);
@@ -18,26 +20,82 @@ function App() {
     number[]
   >([]);
 
-  async function apiRequest() {
+  // 都道府県の取得関数
+  async function prefectureGet() {
     const prefResponse = await fetch("/api/v1/prefectures");
     const prefData: PrefecturesResponse = await prefResponse.json();
     setPrefectures(prefData.result);
   }
 
+  // 都道府県の人口データの取得関数
+  async function getPrefectureData(
+    prefCode: number,
+    prefName: string,
+  ): Promise<SeriesLineOptions> {
+    const params = new URLSearchParams();
+    params.append("prefCode", prefCode.toString());
+    const poplationResponse = await fetch(
+      `/api/v1/population/composition/perYear?${params}`,
+    );
+    const poplationData: PopulationCompositionPerYearResponse =
+      await poplationResponse.json();
+
+    const totalPopulationData = poplationData.result.data.find(
+      (item) => item.label === "総人口",
+    );
+
+    const data = totalPopulationData
+      ? totalPopulationData.data.map((item) => item.value)
+      : [];
+
+    return {
+      type: "line",
+      name: prefName,
+      data: data,
+    };
+  }
+
+  // 都道府県の取得を非同期で実行
   useEffect(() => {
     try {
-      apiRequest();
+      prefectureGet();
     } catch (e) {
       console.log(e);
     }
   }, []);
 
+  // 選択項目に合わせて描画するグラフを選定
   useEffect(() => {
-    if (!prefectures || prefectures.length === 0) {
-      return;
-    }
-  }, [prefectures]);
+    if (prefectures && checkedPrefectureArray.length > 0) {
+      const fetchPromises = prefectures
+        .filter((prefecture) =>
+          checkedPrefectureArray.includes(prefecture.prefCode),
+        )
+        .map((prefecture) =>
+          getPrefectureData(prefecture.prefCode, prefecture.prefName),
+        );
 
+      Promise.all(fetchPromises)
+        .then((resolvedGraphLines) => {
+          setGraphLines((prevGraphLines) => {
+            if (
+              JSON.stringify(prevGraphLines) ===
+              JSON.stringify(resolvedGraphLines)
+            ) {
+              return prevGraphLines;
+            }
+            return resolvedGraphLines;
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching prefecture data:", error);
+        });
+    } else if (checkedPrefectureArray.length === 0) {
+      setGraphLines(undefined);
+    }
+  }, [prefectures, checkedPrefectureArray]);
+
+  // Highchertsグラフの描画を実行
   useEffect(() => {
     if (!graphLines) {
       return;
@@ -60,12 +118,12 @@ function App() {
     };
   }, [graphLines]);
 
+  // 描画
   return (
     <>
       <h1>都道府県選択</h1>
       <PrefectureSelector
         prefectures={prefectures}
-        setGraphLines={setGraphLines}
         checkedPrefectureArray={checkedPrefectureArray}
         setCheckedPrefectureArray={setCheckedPrefectureArray}
       />
