@@ -14,6 +14,9 @@ function App() {
   const [graphLines, setGraphLines] = useState<SeriesOptionsType[] | undefined>(
     undefined,
   );
+  const [checkedPrefectureArray, setCheckedPrefectureArray] = useState<
+    number[]
+  >([]);
 
   async function apiRequest() {
     const prefResponse = await fetch("/api/v1/prefectures");
@@ -33,16 +36,6 @@ function App() {
     if (!prefectures || prefectures.length === 0) {
       return;
     }
-
-    setGraphLines(
-      prefectures.map((prefecture) => {
-        return {
-          type: "line",
-          name: prefecture.prefName,
-          data: [1, 4, 1, 4, 2],
-        };
-      }),
-    );
   }, [prefectures]);
 
   useEffect(() => {
@@ -69,6 +62,13 @@ function App() {
 
   return (
     <>
+      <h1>都道府県選択</h1>
+      <PrefectureSelector
+        prefectures={prefectures}
+        setGraphLines={setGraphLines}
+        checkedPrefectureArray={checkedPrefectureArray}
+        setCheckedPrefectureArray={setCheckedPrefectureArray}
+      />
       <div id="hchart"></div>
     </>
   );
