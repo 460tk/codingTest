@@ -22,6 +22,7 @@ function App() {
   const [populationDataCache, setPopulationDataCache] = useState<
     Map<number, SeriesLineOptions>
   >(new Map());
+  const [categories, setCategories] = useState<string[]>([]);
 
   // 都道府県の取得関数
   async function prefectureGet() {
@@ -32,10 +33,7 @@ function App() {
 
   // 都道府県の人口データの取得関数
   const getPrefectureData = useCallback(
-    async (
-      prefCode: number,
-      prefName: string,
-    ): Promise<SeriesLineOptions> => {
+    async (prefCode: number, prefName: string): Promise<SeriesLineOptions> => {
       if (populationDataCache.has(prefCode)) {
         return populationDataCache.get(prefCode)!;
       }
@@ -62,6 +60,12 @@ function App() {
         data: data,
       };
 
+      if (!categories.length && totalPopulationData) {
+        setCategories(
+          totalPopulationData.data.map((item) => item.year.toString()),
+        );
+      }
+
       setPopulationDataCache((prevCache) => {
         const newCache = new Map(prevCache);
         newCache.set(prefCode, newGraphLine);
@@ -70,7 +74,7 @@ function App() {
 
       return newGraphLine;
     },
-    [populationDataCache, setPopulationDataCache],
+    [populationDataCache, setPopulationDataCache, categories],
   );
 
   // 都道府県の取得を非同期で実行
@@ -121,9 +125,12 @@ function App() {
 
     const mychart = new Highcharts.Chart({
       chart: { renderTo: "hchart" },
-      title: { text: "タイトル" },
-      xAxis: { title: { text: "横軸" } },
-      yAxis: { title: { text: "縦軸" } },
+      title: { text: "人口構成" },
+      xAxis: {
+        title: { text: "年" },
+        categories: categories,
+      },
+      yAxis: { title: { text: "人口数" } },
       series: graphLines,
       legend: {
         layout: "vertical",
