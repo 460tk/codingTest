@@ -20,7 +20,7 @@ function App() {
     number[]
   >([]);
   const [populationDataCache, setPopulationDataCache] = useState<
-    Map<number, SeriesLineOptions>
+    Map<number, PopulationCompositionPerYearResponse>
   >(new Map());
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -34,17 +34,26 @@ function App() {
   // 都道府県の人口データの取得関数
   const getPrefectureData = useCallback(
     async (prefCode: number, prefName: string): Promise<SeriesLineOptions> => {
-      if (populationDataCache.has(prefCode)) {
-        return populationDataCache.get(prefCode)!;
-      }
+      const poplationData = await (async () => {
+        if (populationDataCache.has(prefCode)) {
+          return populationDataCache.get(prefCode)!;
+        }
 
-      const params = new URLSearchParams();
-      params.append("prefCode", prefCode.toString());
-      const poplationResponse = await fetch(
-        `/api/v1/population/composition/perYear?${params}`,
-      );
-      const poplationData: PopulationCompositionPerYearResponse =
-        await poplationResponse.json();
+        const params = new URLSearchParams();
+        params.append("prefCode", prefCode.toString());
+        const poplationResponse = await fetch(
+          `/api/v1/population/composition/perYear?${params}`,
+        );
+        const fetchedPoplationData: PopulationCompositionPerYearResponse =
+          await poplationResponse.json();
+
+        setPopulationDataCache((prevCache) => {
+          const newCache = new Map(prevCache);
+          newCache.set(prefCode, fetchedPoplationData);
+          return newCache;
+        });
+        return fetchedPoplationData;
+      })();
 
       const totalPopulationData = poplationData.result.data.find(
         (item) => item.label === "総人口",
@@ -65,12 +74,6 @@ function App() {
           totalPopulationData.data.map((item) => item.year.toString()),
         );
       }
-
-      setPopulationDataCache((prevCache) => {
-        const newCache = new Map(prevCache);
-        newCache.set(prefCode, newGraphLine);
-        return newCache;
-      });
 
       return newGraphLine;
     },
@@ -141,7 +144,7 @@ function App() {
     return () => {
       mychart.destroy();
     };
-  }, [graphLines]);
+  }, [graphLines, categories]);
 
   // 描画
   return (
