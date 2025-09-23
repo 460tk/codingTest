@@ -26,23 +26,20 @@ function PrefectureSelector({
       {prefectures?.map((prefecture) => {
         const isChecked = checkedPrefectureArray.includes(prefecture.prefCode);
         return (
-          <div
-            key={prefecture.prefCode}
+          <label
             className={`relative flex items-center justify-center p-2 border rounded-md cursor-pointer transition-colors duration-200
               ${isChecked ? "bg-blue-100 border-blue-400" : "bg-white border-gray-300 hover:bg-gray-100"}`}
           >
-            <label className="flex items-center w-full h-full">
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={isChecked}
-                onChange={() => handleChenged(prefecture.prefCode)}
-              />
-              <p className="text-sm font-medium text-gray-700 cursor-pointer w-16 text-center">
-                {prefecture.prefName}
-              </p>
-            </label>
-          </div>
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={isChecked}
+              onChange={() => handleChenged(prefecture.prefCode)}
+            />
+            <p className="text-sm font-medium text-gray-700 cursor-pointer w-16 text-center">
+              {prefecture.prefName}
+            </p>
+          </label>
         );
       })}
     </div>

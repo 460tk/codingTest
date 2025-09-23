@@ -158,19 +158,23 @@ function App() {
   // 描画
   return (
     <>
-      <h1 className="text-3xl font-bold text-center my-4">人口構成</h1>
-      <h2 className="text-xl font-bold text-center my-4">表示データの選択</h2>
-      <PoplationDataSelector
-        poplationDataSelectList={poplationDataSelectList}
-        setPoplationSelect={setPoplationSelect}
-      />
-      <h2 className="text-xl font-bold text-center my-4">都道府県選択</h2>
-      <PrefectureSelector
-        prefectures={prefectures}
-        checkedPrefectureArray={checkedPrefectureArray}
-        setCheckedPrefectureArray={setCheckedPrefectureArray}
-      />
-      <div id="hchart"></div>
+      <h1 className="text-3xl font-bold text-center my-4 ">人口構成</h1>
+      <div className="border rounded-md shadow-md m-12 p-4 border-gray-300">
+        <h2 className="text-xl font-bold text-center my-4">表示データの選択</h2>
+        <PoplationDataSelector
+          poplationDataSelectList={poplationDataSelectList}
+          setPoplationSelect={setPoplationSelect}
+        />
+      </div>
+      <div className="border rounded-md shadow-md m-12 p-4 border-gray-300">
+        <h2 className="text-xl font-bold text-center my-4">都道府県選択</h2>
+        <PrefectureSelector
+          prefectures={prefectures}
+          checkedPrefectureArray={checkedPrefectureArray}
+          setCheckedPrefectureArray={setCheckedPrefectureArray}
+        />
+      </div>
+      <div className="m-12 p-4" id="hchart"></div>
     </>
   );
 }
