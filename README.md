@@ -15,6 +15,8 @@
 ```bash
 npm install
 ```
+4. .envを作成、内容を記載
+
 
 ## 実行
 
