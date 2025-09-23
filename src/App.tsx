@@ -4,6 +4,7 @@ import Highcharts, {
   type SeriesLineOptions,
 } from "highcharts";
 import PrefectureSelector from "./conpornents/PrefectureSelector";
+import PoplationDataSelector from "./conpornents/PoplationDataSelector";
 
 import type {
   Prefecture,
@@ -20,9 +21,17 @@ function App() {
     number[]
   >([]);
   const [populationDataCache, setPopulationDataCache] = useState<
-    Map<number, SeriesLineOptions>
+    Map<number, PopulationCompositionPerYearResponse>
   >(new Map());
   const [categories, setCategories] = useState<string[]>([]);
+  const [poplationSelect, setPoplationSelect] = useState<string>("総人口");
+
+  const poplationDataSelectList: string[] = [
+    "総人口",
+    "年少人口",
+    "生産年齢人口",
+    "老年人口",
+  ];
 
   // 都道府県の取得関数
   async function prefectureGet() {
@@ -34,20 +43,29 @@ function App() {
   // 都道府県の人口データの取得関数
   const getPrefectureData = useCallback(
     async (prefCode: number, prefName: string): Promise<SeriesLineOptions> => {
-      if (populationDataCache.has(prefCode)) {
-        return populationDataCache.get(prefCode)!;
-      }
+      const poplationData = await (async () => {
+        if (populationDataCache.has(prefCode)) {
+          return populationDataCache.get(prefCode)!;
+        }
 
-      const params = new URLSearchParams();
-      params.append("prefCode", prefCode.toString());
-      const poplationResponse = await fetch(
-        `/api/v1/population/composition/perYear?${params}`,
-      );
-      const poplationData: PopulationCompositionPerYearResponse =
-        await poplationResponse.json();
+        const params = new URLSearchParams();
+        params.append("prefCode", prefCode.toString());
+        const poplationResponse = await fetch(
+          `/api/v1/population/composition/perYear?${params}`,
+        );
+        const fetchedPoplationData: PopulationCompositionPerYearResponse =
+          await poplationResponse.json();
+
+        setPopulationDataCache((prevCache) => {
+          const newCache = new Map(prevCache);
+          newCache.set(prefCode, fetchedPoplationData);
+          return newCache;
+        });
+        return fetchedPoplationData;
+      })();
 
       const totalPopulationData = poplationData.result.data.find(
-        (item) => item.label === "総人口",
+        (item) => item.label === poplationSelect,
       );
 
       const data = totalPopulationData
@@ -66,15 +84,9 @@ function App() {
         );
       }
 
-      setPopulationDataCache((prevCache) => {
-        const newCache = new Map(prevCache);
-        newCache.set(prefCode, newGraphLine);
-        return newCache;
-      });
-
       return newGraphLine;
     },
-    [populationDataCache, setPopulationDataCache, categories],
+    [populationDataCache, setPopulationDataCache, categories, poplationSelect],
   );
 
   // 都道府県の取得を非同期で実行
@@ -125,7 +137,7 @@ function App() {
 
     const mychart = new Highcharts.Chart({
       chart: { renderTo: "hchart" },
-      title: { text: "人口構成" },
+      title: { text: poplationSelect },
       xAxis: {
         title: { text: "年" },
         categories: categories,
@@ -141,18 +153,28 @@ function App() {
     return () => {
       mychart.destroy();
     };
-  }, [graphLines]);
+  }, [graphLines, categories, poplationSelect]);
 
   // 描画
   return (
     <>
-      <h1>都道府県選択</h1>
-      <PrefectureSelector
-        prefectures={prefectures}
-        checkedPrefectureArray={checkedPrefectureArray}
-        setCheckedPrefectureArray={setCheckedPrefectureArray}
-      />
-      <div id="hchart"></div>
+      <h1 className="text-3xl font-bold text-center my-4 ">人口構成</h1>
+      <div className="border rounded-md shadow-md m-12 p-4 border-gray-300">
+        <h2 className="text-xl font-bold text-center my-4">表示データの選択</h2>
+        <PoplationDataSelector
+          poplationDataSelectList={poplationDataSelectList}
+          setPoplationSelect={setPoplationSelect}
+        />
+      </div>
+      <div className="border rounded-md shadow-md m-12 p-4 border-gray-300">
+        <h2 className="text-xl font-bold text-center my-4">都道府県選択</h2>
+        <PrefectureSelector
+          prefectures={prefectures}
+          checkedPrefectureArray={checkedPrefectureArray}
+          setCheckedPrefectureArray={setCheckedPrefectureArray}
+        />
+      </div>
+      <div className="m-12 p-4" id="hchart"></div>
     </>
   );
 }
