@@ -5,7 +5,7 @@ export async function onRequest(context) {
   if (url.pathname.startsWith("/api")) {
     url.pathname = url.pathname.replace("/api", "");
 
-    const targetUrl = new URL(url.pathname + url.search, env.VITE_API_URL);
+    const targetUrl = env.VITE_API_URL + url.pathname + url.search;
 
     console.log(targetUrl.toString());
 
