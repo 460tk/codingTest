@@ -1,10 +1,5 @@
-export interface Env {
-  VITE_API_URL: string;
-  VITE_XAPI_KEY: string;
-}
-
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request, env) {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith("/api")) {
