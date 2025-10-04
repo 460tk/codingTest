@@ -7,8 +7,6 @@ export async function onRequest(context) {
 
     const targetUrl = env.VITE_API_URL + url.pathname + url.search;
 
-    console.log(targetUrl.toString());
-
     const newRequest = new Request(targetUrl.toString(), {
       method: request.method,
       headers: {
